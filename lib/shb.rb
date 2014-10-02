@@ -1,0 +1,7 @@
+require 'active_support/configurable'
+require 'httparty'
+require 'logger'
+require 'shb/version'
+require 'shb/parser'
+require 'shb/abstract_client'
+require 'shb/client'
