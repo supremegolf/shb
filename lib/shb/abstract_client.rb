@@ -25,7 +25,6 @@ module Shb
     def initialize(base_uri: 'http://supremegolf.com')
       self.class.base_uri base_uri
       @root_uri = URI.parse(self.class.base_uri.to_s)
-      @cookie = nil
     end
 
     def get(path, options = {}, &block)
@@ -45,24 +44,51 @@ module Shb
 
     #
     def make_request!(method, path, options = {}, &block)
-      path = @root_uri.merge(path.to_s.gsub(' ', '%20'))
-      if (response = cache_read(method, path, options)).nil?
-        logger.info "#{method.to_s.upcase} #{path.to_s}#{options[:query].nil? ? nil : "?#{HashConversions.to_params(options[:query])}"}"
-        if config.cycle_user_agent
-          self.class.headers('User-Agent' => AGENT_ALIASES.shuffle.first)
-        end
-        if config.use_cookies && !@cookie.nil?
-          self.class.headers('Cookie' => @cookie)
-        end
-        response = self.class.send(method, path.to_s, options, &block)
-        @cookies = response.headers['set-cookie']
-        cache_write(response, path, options)
+      uri = path_to_uri(path)
+      if (response = cache_read(method, uri, options)).nil?
+        log_request!(method, uri, options)
+        cycle_user_agent!
+        set_cookies!
+        response = self.class.send(method, uri.to_s, options, &block)
+        save_cookies!(response)
+        cache_write(response, uri, options)
       end
       response
     rescue SocketError, Net::ReadTimeout => e
-      logger.error "ERROR #{e.inspect} : path=#{path}"
+      logger.error "ERROR #{e.inspect} : uri=#{uri}"
       sleep 60
       retry
+    end
+
+    #
+    def path_to_uri(path)
+      @root_uri.merge(path.to_s.gsub(' ', '%20'))
+    end
+
+    #
+    def log_request!(method, uri, options)
+      logger.info "#{method.to_s.upcase} #{uri.to_s}#{options[:query].nil? ? nil : "?#{HashConversions.to_params(options[:query])}"}"
+    end
+
+    #
+    def cycle_user_agent!
+      return unless config.cycle_user_agent
+      @user_agent_alias_idx ||= 0
+      self.class.headers('User-Agent' => AGENT_ALIASES[@user_agent_alias_idx])
+      @user_agent_alias_idx += 1
+      @user_agent_alias_idx %= AGENT_ALIASES.size
+    end
+
+    #
+    def set_cookies!
+      return unless config.use_cookies && !@cookies.nil?
+      self.class.headers('Cookie' => @cookies)
+    end
+
+    #
+    def save_cookies!(response)
+      return unless config.use_cookies
+      @cookies = response.headers['set-cookie']
     end
 
     #
@@ -77,23 +103,23 @@ module Shb
     end
 
     #
-    def cache_write(response, path, options = {})
+    def cache_write(response, uri, options = {})
       return true unless config.cache
       return true if response.code >= 400 # Don't cache bad responses
 
-      file = cache_file(path, options)
+      file = cache_file(uri, options)
       FileUtils.mkdir_p(File.dirname(file))
       File.open(file, 'w') do |f|
         f.puts YAML::dump(response.response)
       end
     end
 
-    def cache_read(method, path, options = {})
+    def cache_read(method, uri, options = {})
       raise unless config.cache
 
-      file = cache_file(path, options)
+      file = cache_file(uri, options)
       raise unless File.exist?(file)
-      logger.info "#{method.to_s.upcase} CACHE #{path.to_s}#{method == :get && !options[:query].empty? ? "?#{HashConversions.to_params(options[:query])}" : nil}"
+      logger.info "#{method.to_s.upcase} CACHE #{uri.to_s}#{method == :get && !options[:query].empty? ? "?#{HashConversions.to_params(options[:query])}" : nil}"
       r = YAML::load_file(file)
       raise if r.content_type.nil?
       HTTParty::Response.new(OpenStruct.new(options:options), r,

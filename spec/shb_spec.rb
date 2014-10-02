@@ -30,7 +30,7 @@ describe Shb::Client do
     specify { expect(shb.put('/').body).to eq "put" }
   end
 
-  context "requests with data", :focus do
+  context "requests with data" do
     before do 
       stub_request(:any, 'supremegolf.com?q=1').to_return {|r| 
         { status:200, body: [r.uri.query, r.body].join('&') }
