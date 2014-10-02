@@ -99,8 +99,8 @@ module Shb
 
       @logger = if config.logger
                   ::Logger.new(config.logger)
-                elsif defined?(Rails)
-                  ::Logger.new( File.join(Rails.root, 'log', 'shb.log') )
+                elsif defined?(::Rails)
+                  ::Logger.new( File.join(::Rails.root, 'log', 'shb.log') )
                 else
                   ::Logger.new(STDERR)
                 end
