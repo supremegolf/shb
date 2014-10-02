@@ -43,57 +43,5 @@ describe Shb::Client do
     specify { expect(shb.put('/', query: {q: 1}, body: {body: 1}).body).to eq "q=1&body=1" }
   end
 
-  context "JSON requests" do
-    before do 
-      stub_request(:any, 'supremegolf.com').to_return {|r| 
-        {
-          body: '{"one":1}', 
-          headers: {'Content-Type' => 'application/json'}
-        }
-      }
-      stub_request(:any, 'supremegolf.com/bad-json').to_return {|r| 
-        {
-          body: '{missing_first_double_quote":1}', 
-          headers: {'Content-Type' => 'application/json'}
-        }
-      }
-    end
-    let(:shb) { Shb::Client.new }
-
-    specify { expect(shb.get('/').parsed_response).to be_a Hash }
-    specify { expect(shb.get('/').parsed_response['one']).to eq 1 }
-    specify { expect(shb.get('/bad-json').parsed_response).to eq nil }
-  end
-
-  context "XML requests" do
-    before do 
-      stub_request(:any, 'supremegolf.com').to_return {|r| 
-        {
-          body: '<xml><title>Test</title></xml>', 
-          headers: {'Content-Type' => 'text/xml'}
-        }
-      }
-    end
-    let(:shb) { Shb::Client.new }
-
-    specify { expect(shb.get('/').parsed_response).to be_a Nokogiri::XML::Document }
-    specify { expect(shb.get('/').parsed_response.at('title').text).to eq 'Test' }
-  end
-
-  context "HTML requests" do
-    before do 
-      stub_request(:any, 'supremegolf.com').to_return {|r| 
-        {
-          body: '<html><title>Test</title></html>', 
-          headers: {'Content-Type' => 'text/html'}
-        }
-      }
-    end
-    let(:shb) { Shb::Client.new }
-
-    specify { expect(shb.get('/').parsed_response).to be_a Nokogiri::HTML::Document }
-    specify { expect(shb.get('/').parsed_response.at('title').text).to eq 'Test' }
-  end
-
 
 end

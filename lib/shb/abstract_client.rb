@@ -25,7 +25,7 @@ module Shb
     def initialize(base_uri: 'http://supremegolf.com')
       self.class.base_uri base_uri
       @root_uri = URI.parse(self.class.base_uri.to_s)
-      @cookies = nil
+      @cookie = nil
     end
 
     def get(path, options = {}, &block)
@@ -40,30 +40,22 @@ module Shb
       make_request!(:put, path, options, &block)
     end
 
-    def absolute_url(path)
-      @root_uri.merge path.to_s.gsub(' ', '%20')
-    end
-
     ################################################################################
     private
 
     #
     def make_request!(method, path, options = {}, &block)
-      path = absolute_url(path)
+      path = @root_uri.merge(path.to_s.gsub(' ', '%20'))
       if (response = cache_read(method, path, options)).nil?
         logger.info "#{method.to_s.upcase} #{path.to_s}#{options[:query].nil? ? nil : "?#{HashConversions.to_params(options[:query])}"}"
         if config.cycle_user_agent
           self.class.headers('User-Agent' => AGENT_ALIASES.shuffle.first)
         end
-        if config.use_cookies && !@cookies.nil?
-          self.class.headers('Cookie' => URI.unescape(@cookies.map{|c| [c.name, c.value].join('=') }.join(';') ))
+        if config.use_cookies && !@cookie.nil?
+          self.class.headers('Cookie' => @cookie)
         end
         response = self.class.send(method, path.to_s, options, &block)
-        @cookies = begin 
-                     HTTP::CookieJar.new.parse(response.headers['set-cookie'], path)
-                   rescue
-                     nil
-                   end
+        @cookies = response.headers['set-cookie']
         cache_write(response, path, options)
       end
       response
