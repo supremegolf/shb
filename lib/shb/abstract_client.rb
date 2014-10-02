@@ -15,8 +15,10 @@ module Shb
     ]
 
     config.cache = !!(ENV['SHB_CACHE'] =~ /^[T1Y]/i) # TRUE, 1, YES
+    config.cache_class = ::Shb::Cache
     config.cycle_user_agent = false
     config.use_cookies = false
+    config.logger = nil
 
     parser ::Shb::Parser
     follow_redirects false
@@ -94,11 +96,19 @@ module Shb
     #
     def logger
       return @logger unless @logger.nil?
-      # TODO @logger = ::Logger.new( File.join(Rails.root, 'log', 'shb.log') )
-      @logger = ::Logger.new(STDERR)
+
+      @logger = if config.logger
+                  ::Logger.new(config.logger)
+                elsif defined?(Rails)
+                  ::Logger.new( File.join(Rails.root, 'log', 'shb.log') )
+                else
+                  ::Logger.new(STDERR)
+                end
+
       @logger.formatter = proc do |severity, datetime, progname, msg|
         "%-7s [%s] -- %s\n" % [severity, datetime, msg]
       end
+
       @logger
     end
 
@@ -106,37 +116,22 @@ module Shb
     def cache_write(response, uri, options = {})
       return true unless config.cache
       return true if response.code >= 400 # Don't cache bad responses
-
-      file = cache_file(uri, options)
-      FileUtils.mkdir_p(File.dirname(file))
-      File.open(file, 'w') do |f|
-        f.puts YAML::dump(response.response)
-      end
+      config.cache_class.write(response, uri, options)
     end
 
     def cache_read(method, uri, options = {})
       raise unless config.cache
 
-      file = cache_file(uri, options)
-      raise unless File.exist?(file)
       logger.info "#{method.to_s.upcase} CACHE #{uri.to_s}#{method == :get && !options[:query].empty? ? "?#{HashConversions.to_params(options[:query])}" : nil}"
-      r = YAML::load_file(file)
-      raise if r.content_type.nil?
-      HTTParty::Response.new(OpenStruct.new(options:options), r,
-                             ->{ ShbParser.call(r.body, options[:format] || ShbParser.format_from_mimetype(r.content_type)) }, 
-                             body: r.body)
+
+      response = config.cache_class.read(method, uri, options)
+
+      HTTParty::Response.new(OpenStruct.new(options:options), response,
+         ->{ self.class.parser.call(response.body, options[:format] || self.class.parser.format_from_mimetype(response.content_type)) }, 
+         body: response.body)
+
     rescue 
       nil
-    end
-
-    def cache_file(uri, options = {})
-      bits = [Rails.root]
-      bits << 'tmp'
-      bits << uri.host
-      path = uri.path == '/' ? 'ROOT' : uri.path.parameterize
-      query = options.empty? ? nil : "?#{HashConversions.to_params(options)}"
-      bits << Digest::MD5.hexdigest([path,uri.fragment,uri.query,query].join)
-      File.join(bits)
     end
 
   end # of class AbstractClient
