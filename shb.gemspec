@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'shb/version'
 
 Gem::Specification.new do |gem|
-  gem.name          = "sgb"
+  gem.name          = "shb"
   gem.version       = Shb::VERSION
   gem.authors       = ["Philip Hallstrom"]
   gem.email         = ["philip@supremegolf.com"]
