@@ -20,8 +20,8 @@ describe Shb::Client do
 
   it "logs to Rails.root/tmp/shb.log if using Rails" do
     skip "How to double ::Rails and ::Rails.root?"
-    expect(::Logger).to receive(:new).with('rails-root/log/shb.log').and_call_original
     shb = Shb::Client.new
+    expect(::Logger).to receive(:new).with('rails-root/log/shb.log').and_call_original
     shb.get('/')
   end
 

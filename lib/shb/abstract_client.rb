@@ -120,18 +120,18 @@ module Shb
     end
 
     def cache_read(method, uri, options = {})
-      raise unless config.cache
+      return nil unless config.cache
 
-      logger.info "#{method.to_s.upcase} CACHE #{uri.to_s}#{method == :get && !options[:query].empty? ? "?#{HashConversions.to_params(options[:query])}" : nil}"
+      logger.info "#{method.to_s.upcase} CACHE #{uri.to_s}#{method == :get && !options[:query].to_s.empty? ? "?#{HashConversions.to_params(options[:query])}" : nil}"
 
       response = config.cache_class.read(method, uri, options)
+
+      return nil if response.nil?
 
       HTTParty::Response.new(OpenStruct.new(options:options), response,
          ->{ self.class.parser.call(response.body, options[:format] || self.class.parser.format_from_mimetype(response.content_type)) }, 
          body: response.body)
 
-    rescue 
-      nil
     end
 
   end # of class AbstractClient

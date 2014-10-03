@@ -1,3 +1,5 @@
+require 'fileutils'
+
 module Shb
   class Cache
     class << self
@@ -12,14 +14,15 @@ module Shb
 
       def read(method, uri, options = {})
         file = cache_file(uri, options)
-        raise unless File.exist?(file)
+        return nil unless File.exist?(file)
         r = YAML::load_file(file)
-        raise if r.content_type.nil?
+        r.content_type = 'text/plain' if r.content_type.nil?
         r
       end
 
       def cache_file(uri, options = {})
-        bits = [Rails.root]
+        bits = []
+        bits << Rails.root if defined?(::Rails)
         bits << 'tmp'
         bits << uri.host
         path = uri.path == '/' ? 'ROOT' : uri.path.parameterize
