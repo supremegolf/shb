@@ -19,6 +19,8 @@ module Shb
     config.cycle_user_agent = false
     config.use_cookies = false
     config.logger = nil
+    config.debug = false
+    config.debug_log = nil
 
     parser ::Shb::Parser
     follow_redirects false
@@ -52,6 +54,7 @@ module Shb
         cycle_user_agent!
         set_cookies!
         response = self.class.send(method, uri.to_s, options, &block)
+        debug!(method, uri, options, response)
         save_cookies!(response)
         cache_write(response, uri, options)
       end
@@ -71,6 +74,39 @@ module Shb
     def log_request!(method, uri, options)
       logger.info "#{method.to_s.upcase} #{uri.to_s}#{options[:query].nil? ? nil : "?#{HashConversions.to_params(options[:query])}"}"
     end
+
+    #
+    def debug!(method, uri, options, response)
+      return unless config.debug
+
+      io = if config.debug_log
+               File.open(config.debug_log, 'a')
+             elsif defined?(::Rails)
+               File.open(File.join(::Rails.root, 'log', 'shb-debug.log'), 'a')
+             else
+               STDERR
+             end
+
+      io.puts
+      io.puts ">>>>>>>>>> #{response.request.http_method::METHOD} #{response.request.last_uri.to_s}"
+      response.request.options[:headers].sort.each do |k,v|
+        io.puts "#{k}: #{v}"
+      end
+      io.puts
+      io.puts response.request.options[:body]
+
+      io.puts
+      io.puts "<<<<<<<<<< #{response.code} #{response.message}"
+      response.headers.sort.each do |k,v|
+        io.puts "#{k}: #{v}"
+      end
+      io.puts
+      io.puts response.body
+      io.puts
+    ensure
+      io.close if io.is_a? File # Don't close STDERR
+    end
+
 
     #
     def cycle_user_agent!
