@@ -89,16 +89,20 @@ module Shb
 
       io.puts
       io.puts ">>>>>>>>>> #{response.request.http_method::METHOD} #{response.request.last_uri.to_s}"
-      response.request.options[:headers].sort.each do |k,v|
-        io.puts "#{k}: #{v}"
+      response.request.options[:headers].sort.each do |k,vs|
+        [vs].flatten.each do |v|
+          io.puts "#{k}: #{v}"
+        end
       end
       io.puts
       io.puts response.request.options[:body]
 
       io.puts
       io.puts "<<<<<<<<<< #{response.code} #{response.message}"
-      response.headers.sort.each do |k,v|
-        io.puts "#{k}: #{v}"
+      response.headers.sort.each do |k,vs|
+        [vs].flatten.each do |v|
+          io.puts "#{k}: #{v}"
+        end
       end
       io.puts
       io.puts response.body
