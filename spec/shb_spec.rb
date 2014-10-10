@@ -8,7 +8,7 @@ describe Shb::Client do
     specify { expect(Shb::Client.new.config.use_cookies).to be_falsey }
     specify { expect(Shb::Client.new.class.default_options[:parser]).to eq Shb::Parser }
     specify { expect(Shb::Client.new.class.default_options[:follow_redirects]).to be_falsey }
-    specify { expect(Shb::Client.new.class.default_options[:headers]['User-Agent']).to eq Shb::AbstractClient::AGENT_ALIASES.first }
+    specify { expect(Shb::Client.new.class.default_options[:headers]['User-Agent']).to eq Shb::AbstractClient::USER_AGENT }
   end
 
   context "simple requests" do

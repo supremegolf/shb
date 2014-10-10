@@ -4,6 +4,7 @@ module Shb
     include ActiveSupport::Configurable
     include HTTParty
 
+    USER_AGENT = "Shb/#{VERSION}"
     AGENT_ALIASES = [
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.71 (KHTML, like Gecko) Version/6.1 Safari/537.71', # Safari on OSX Lion
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9) AppleWebKit/537.71 (KHTML, like Gecko) Version/7.0 Safari/537.71', # Safari on OSX Mavericks
@@ -24,7 +25,7 @@ module Shb
 
     parser ::Shb::Parser
     follow_redirects false
-    headers 'User-Agent' => AGENT_ALIASES.first
+    headers 'User-Agent' => USER_AGENT
 
     def initialize(base_uri: 'http://supremegolf.com')
       self.class.base_uri base_uri
