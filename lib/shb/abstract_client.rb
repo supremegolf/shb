@@ -108,7 +108,9 @@ module Shb
         end
       end
       io.puts
-      io.puts response.body
+      unless response.body.nil?
+        io.puts response.body.force_encoding('utf-8')
+      end
       io.puts
     ensure
       io.close if io.is_a? File # Don't close STDERR
