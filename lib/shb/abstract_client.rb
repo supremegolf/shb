@@ -93,7 +93,7 @@ module Shb
       io.puts "#{response.request.http_method::METHOD} #{response.request.last_uri.to_s}"
       response.request.options[:headers].sort.each do |k,vs|
         [vs].flatten.each do |v|
-          io.puts "#{k}: #{v}"
+          io.puts "#{k}: #{v}".force_encoding('utf-8')
         end
       end
       io.puts
@@ -104,7 +104,7 @@ module Shb
       io.puts "#{response.code} #{response.message}"
       response.headers.sort.each do |k,vs|
         [vs].flatten.each do |v|
-          io.puts "#{k}: #{v}"
+          io.puts "#{k}: #{v}".force_encoding('utf-8')
         end
       end
       io.puts
