@@ -44,6 +44,10 @@ module Shb
       make_request!(:put, path, options, &block)
     end
 
+    def delete(path, options = {}, &block)
+      make_request!(:delete, path, options, &block)
+    end
+
     ################################################################################
     private
 

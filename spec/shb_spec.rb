@@ -28,6 +28,8 @@ describe Shb::Client do
     specify { expect(shb.post('/').body).to eq "post" }
     specify { expect(shb.put('/').code).to eq 200 }
     specify { expect(shb.put('/').body).to eq "put" }
+    specify { expect(shb.delete('/').code).to eq 200 }
+    specify { expect(shb.delete('/').body).to eq "delete" }
   end
 
   context "requests with data" do
@@ -41,6 +43,7 @@ describe Shb::Client do
     specify { expect(shb.get('/', query: {q: 1}).body).to eq "q=1&" }
     specify { expect(shb.post('/', query: {q: 1}, body: {body: 1}).body).to eq "q=1&body=1" }
     specify { expect(shb.put('/', query: {q: 1}, body: {body: 1}).body).to eq "q=1&body=1" }
+    specify { expect(shb.delete('/', query: {q: 1}, body: {body: 1}).body).to eq "q=1&body=1" }
   end
 
 
