@@ -27,6 +27,9 @@ module Shb
     follow_redirects false
     headers 'User-Agent' => USER_AGENT
 
+    open_timeout 60
+    read_timeout 60
+
     def initialize(base_uri: 'http://supremegolf.com')
       self.class.base_uri base_uri
       @root_uri = URI.parse(self.class.base_uri.to_s)
@@ -64,10 +67,6 @@ module Shb
         cache_write(response, uri, options)
       end
       response
-    rescue SocketError, Net::ReadTimeout => e
-      logger.error "ERROR #{e.inspect} : uri=#{uri}"
-      sleep 60
-      retry
     end
 
     #
@@ -178,7 +177,7 @@ module Shb
       return nil if response.nil?
 
       HTTParty::Response.new(OpenStruct.new(options:options), response,
-         ->{ self.class.parser.call(response.body, options[:format] || self.class.parser.format_from_mimetype(response.content_type)) }, 
+         ->{ self.class.parser.call(response.body, options[:format] || self.class.parser.format_from_mimetype(response.content_type)) },
          body: response.body)
 
     end
