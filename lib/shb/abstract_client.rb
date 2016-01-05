@@ -27,6 +27,9 @@ module Shb
     follow_redirects false
     headers 'User-Agent' => USER_AGENT
 
+    open_timeout 60
+    read_timeout 60
+
     def initialize(base_uri: 'http://supremegolf.com')
       self.class.base_uri base_uri
       @root_uri = URI.parse(self.class.base_uri.to_s)
